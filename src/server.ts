@@ -1,5 +1,5 @@
 import express from "express";
-import users from "../data/users.json";
+import users from "../data/users.json" with { type: "json" };
 
 const app = express();
 const PORT = 3000;
