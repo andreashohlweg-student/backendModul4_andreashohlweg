@@ -36,6 +36,18 @@ app.get("/greet/:name", (req, res) => {
   res.json({ message });
 });
 
+app.get("/greet", (req, res) => {
+  const name = req.query.name;
+  const lang = req.query.lang;
+
+  const message =
+    lang === "en"
+      ? `Hello ${name}`
+      : `Hallo ${name}`;
+
+  res.json({ message });
+});
+
 app.get("/users", (req, res) => {
   res.status(200).json(users);
 });
