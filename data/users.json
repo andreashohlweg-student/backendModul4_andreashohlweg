@@ -1,0 +1,32 @@
+[
+  {
+    "username": "anna",
+    "fullname": "Anna Müller",
+    "id": 0,
+    "profileDescription": "Frontend Developer"
+  },
+  {
+    "username": "max",
+    "fullname": "Max Berger",
+    "id": 1,
+    "profileDescription": "Backend Developer"
+  },
+  {
+    "username": "lisa",
+    "fullname": "Lisa Schmidt",
+    "id": 2,
+    "profileDescription": "UX Designer"
+  },
+  {
+    "username": "tom",
+    "fullname": "Tom Weber",
+    "id": 3,
+    "profileDescription": "Student"
+  },
+  {
+    "username": "sara",
+    "fullname": "Sara Klein",
+    "id": 4,
+    "profileDescription": "Photographer"
+  }
+]
