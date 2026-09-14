@@ -8,6 +8,14 @@ app.get("/echo", (req, res) => {
   res.send("Echo");
 });
 
+app.get("/hello", (req, res) => {
+    res.status(200).json({
+    success: true,
+    message: "Syntax!",
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -16,8 +24,8 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.get("/greet", (req, res) => {
-  const name = req.query.name;
+app.get("/greet/:name", (req, res) => {
+  const {name} = req.params;
   const lang = req.query.lang;
 
   const message =
