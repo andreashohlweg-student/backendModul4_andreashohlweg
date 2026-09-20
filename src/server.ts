@@ -177,42 +177,47 @@ app.post(
   (
     req: Request<{}, {}, CreateTodoBody>,
     res: Response<Todo | ErrorResponse>,
+    next: NextFunction,
   ) => {
-    const { title } = req.body;
+    try {
+      const { title } = req.body;
 
-    if (title === undefined) {
-      return res.status(400).json({
-        error: "Das Feld 'title' fehlt.",
-      });
+      if (title === undefined) {
+        return res.status(400).json({
+          error: "Das Feld 'title' fehlt.",
+        });
+      }
+
+      if (typeof title !== "string") {
+        return res.status(400).json({
+          error: "'title' muss ein String sein.",
+        });
+      }
+
+      if (title.trim().length === 0) {
+        return res.status(400).json({
+          error: "'title' darf nicht leer sein.",
+        });
+      }
+
+      if (title.length > 100) {
+        return res.status(400).json({
+          error: "'title' darf maximal 100 Zeichen lang sein.",
+        });
+      }
+
+      const newTodo: Todo = {
+        id: todos.length + 1,
+        title: title.trim(),
+        done: false,
+      };
+
+      todos.push(newTodo);
+
+      res.status(201).json(newTodo);
+    } catch (error) {
+      next(error);
     }
-
-    if (typeof title !== "string") {
-      return res.status(400).json({
-        error: "'title' muss ein String sein.",
-      });
-    }
-
-    if (title.trim().length === 0) {
-      return res.status(400).json({
-        error: "'title' darf nicht leer sein.",
-      });
-    }
-
-    if (title.length > 100) {
-      return res.status(400).json({
-        error: "'title' darf maximal 100 Zeichen lang sein.",
-      });
-    }
-
-    const newTodo: Todo = {
-      id: todos.length + 1,
-      title: title.trim(),
-      done: false,
-    };
-
-    todos.push(newTodo);
-
-    res.status(201).json(newTodo);
   },
 );
 
