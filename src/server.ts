@@ -3,11 +3,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 
-import { randomUUID } from "node:crypto";
+
+import tweetRouter from "./routes/tweet.routes.js";
+import userRouter from "./routes/user.routes.js";
 
 import usersData from "../data/users.json" with { type: "json" };
 
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 
 import type {
   LoginRequestBody,
@@ -28,15 +30,9 @@ import type {
   CreateTodoBody,
 } from "./types/todo.js";
 
-import type {
-  Tweet,
-  CreateTweetBody,
-  DeleteTweetParams,
-  DeleteTweetResponse,
-} from "./types/tweet.js";
-
 import type { User } from "./types/user.js";
 
+import { createSession, getUsernameBySession, deleteSession } from "./services/session.service.js";
 
 // --------------------------------------------------
 // App Setup
@@ -48,6 +44,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
 
 
 // --------------------------------------------------
@@ -62,70 +59,7 @@ const registeredUsers = new Map<string, string>([
   ["charlie", process.env.CHARLIE_PASSWORD ?? ""],
 ]);
 
-const sessions = new Map<string, string>();
-
 const todos: Todo[] = [];
-
-const tweets: Tweet[] = [];
-
-
-// --------------------------------------------------
-// Middleware
-// --------------------------------------------------
-
-const checkAuth = (
-  req: Request,
-  res: Response<AuthErrorResponse>,
-  next: NextFunction,
-) => {
-  const sessionId = req.cookies.sessionId;
-
-  if (typeof sessionId !== "string") {
-    return res.status(401).json({
-      error: "Please sign in",
-    });
-  }
-
-  const username = sessions.get(sessionId);
-
-  if (!username) {
-    return res.status(401).json({
-      error: "Please sign in",
-    });
-  }
-
-  req.user = username;
-
-  next();
-};
-
-const canDeleteTweet = (
-  req: Request<DeleteTweetParams>,
-  res: Response<ErrorResponse>,
-  next: NextFunction,
-) => {
-  const tweetId = Number(req.params.id);
-
-  const tweet = tweets.find(
-    (tweet) => tweet.id === tweetId,
-  );
-
-  if (!tweet) {
-    return res.status(404).json({
-      error: "Tweet not found",
-    });
-  }
-
-  if (tweet.author !== req.user) {
-    return res.status(403).json({
-      error: "Not allowed",
-    });
-  }
-
-  req.tweet = tweet;
-
-  next();
-};
 
 // --------------------------------------------------
 // Auth
@@ -147,9 +81,7 @@ app.post(
       });
     }
 
-    const sessionId = randomUUID();
-
-    sessions.set(sessionId, username);
+    const sessionId = createSession(username);
 
     res.cookie("sessionId", sessionId, {
       httpOnly: true,
@@ -168,7 +100,7 @@ app.post(
     const sessionId = req.cookies.sessionId;
 
     if (typeof sessionId === "string") {
-      sessions.delete(sessionId);
+      deleteSession(sessionId);
     }
 
     res.clearCookie("sessionId");
@@ -195,7 +127,7 @@ app.get(
       });
     }
 
-    const username = sessions.get(sessionId);
+    const username = getUsernameBySession(sessionId);
 
     if (!username) {
       return res.status(401).json({
@@ -283,51 +215,8 @@ app.post(
 // Tweets
 // --------------------------------------------------
 
-app.post(
-  "/tweets",
-  checkAuth,
-  (
-    req: Request<{}, {}, CreateTweetBody>,
-    res: Response<Tweet | ErrorResponse>,
-  ) => {
-    const { text } = req.body;
-
-    if (typeof text !== "string" || text.trim().length === 0) {
-      return res.status(400).json({
-        error: "Tweet text is required",
-      });
-    }
-
-    const newTweet: Tweet = {
-      id: tweets.length + 1,
-      text: text.trim(),
-      author: req.user!,
-    };
-
-    tweets.push(newTweet);
-
-    res.status(201).json(newTweet);
-  },
-);
-
-
-app.delete(
-  "/tweets/:id",
-  checkAuth,
-  canDeleteTweet,
-  (req: Request<DeleteTweetParams>, res: Response<DeleteTweetResponse>) => {
-    const tweetIndex = tweets.findIndex(
-      (tweet) => tweet.id === req.tweet!.id,
-    );
-
-    tweets.splice(tweetIndex, 1);
-
-    res.json({
-      success: true,
-    });
-  },
-);
-
+app.use("/tweets", tweetRouter);
+app.use("/users", userRouter);
 
 // --------------------------------------------------
 // Allgemeine Routes
