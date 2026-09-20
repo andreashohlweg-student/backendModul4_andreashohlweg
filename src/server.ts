@@ -7,6 +7,7 @@ import type { Request, Response, NextFunction } from "express";
 
 import tweetRouter from "./routes/tweet.routes.js";
 import userRouter from "./routes/user.routes.js";
+import todoRouter from "./routes/todo.routes.js";
 
 import { getAllUsers } from "./services/user.service.js";
 import {
@@ -18,10 +19,6 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { InvalidCredentialsError } from "./errors/invalidCredentialsError.js";
 import { NotSignedInError } from "./errors/notSignedInError.js";
-import { TodoTitleMissingError } from "./errors/todoTitleMissingError.js";
-import { TodoTitleTypeError } from "./errors/todoTitleTypeError.js";
-import { TodoTitleEmptyError } from "./errors/todoTitleEmptyError.js";
-import { TodoTitleTooLongError } from "./errors/todoTitleTooLongError.js";
 
 import type {
   LoginRequestBody,
@@ -34,10 +31,6 @@ import type {
   HealthResponse,
   GreetResponse,
 } from "./types/common.js";
-
-import type { Todo } from "./types/todo.js";
-import type { CreateTodoBody } from "./types/todoRequest.js";
-
 
 // --------------------------------------------------
 // App Setup
@@ -61,9 +54,6 @@ const registeredUsers = new Map<string, string>(
     process.env[`${user.username.toUpperCase()}_PASSWORD`] ?? "",
   ]),
 );
-
-const todos: Todo[] = [];
-
 
 // --------------------------------------------------
 // Auth
@@ -158,68 +148,12 @@ app.get(
 
 
 // --------------------------------------------------
-// Todos
-// --------------------------------------------------
-
-app.get(
-  "/todos",
-  (
-    _req: Request,
-    res: Response<Todo[]>,
-  ) => {
-    res.json(todos);
-  },
-);
-
-
-app.post(
-  "/todos",
-  (
-    req: Request<{}, {}, CreateTodoBody>,
-    res: Response<Todo>,
-    next: NextFunction,
-  ) => {
-    try {
-      const { title } = req.body;
-
-      if (title === undefined) {
-        return next(new TodoTitleMissingError());
-      }
-
-      if (typeof title !== "string") {
-        return next(new TodoTitleTypeError());
-      }
-
-      if (title.trim().length === 0) {
-        return next(new TodoTitleEmptyError());
-      }
-
-      if (title.length > 100) {
-        return next(new TodoTitleTooLongError());
-      }
-
-      const newTodo: Todo = {
-        id: todos.length + 1,
-        title: title.trim(),
-        done: false,
-      };
-
-      todos.push(newTodo);
-
-      res.status(201).json(newTodo);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-
-// --------------------------------------------------
 // Resource Routes
 // --------------------------------------------------
 
 app.use("/tweets", tweetRouter);
 app.use("/users", userRouter);
+app.use("/todos", todoRouter);
 
 
 // --------------------------------------------------
