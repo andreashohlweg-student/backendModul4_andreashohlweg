@@ -7,7 +7,3 @@ export type HealthResponse = {
 export type GreetResponse = {
   message: string;
 };
-
-export type ErrorResponse = {
-  error: string;
-};

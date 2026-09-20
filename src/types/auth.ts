@@ -15,7 +15,3 @@ export type LogoutResponse = {
 export type MeResponse = {
   user: string;
 };
-
-export type AuthErrorResponse = {
-  error: string;
-};

@@ -28,19 +28,15 @@ import type {
   LoginResponse,
   LogoutResponse,
   MeResponse,
-  AuthErrorResponse,
 } from "./types/auth.js";
 
 import type {
   HealthResponse,
   GreetResponse,
-  ErrorResponse,
 } from "./types/common.js";
 
-import type {
-  Todo,
-  CreateTodoBody,
-} from "./types/todo.js";
+import type { Todo } from "./types/todo.js";
+import type { CreateTodoBody } from "./types/todoRequest.js";
 
 
 // --------------------------------------------------
@@ -77,7 +73,7 @@ app.post(
   "/auth/login",
   (
     req: Request<{}, {}, LoginRequestBody>,
-    res: Response<LoginResponse | AuthErrorResponse>,
+    res: Response<LoginResponse>,
     next: NextFunction,
   ) => {
     try {
@@ -135,7 +131,7 @@ app.get(
   "/me",
   (
     req: Request,
-    res: Response<MeResponse | AuthErrorResponse>,
+    res: Response<MeResponse>,
     next: NextFunction,
   ) => {
     try {
@@ -180,7 +176,7 @@ app.post(
   "/todos",
   (
     req: Request<{}, {}, CreateTodoBody>,
-    res: Response<Todo | ErrorResponse>,
+    res: Response<Todo>,
     next: NextFunction,
   ) => {
     try {

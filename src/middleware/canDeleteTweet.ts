@@ -5,7 +5,7 @@ import { AppError } from "../errors/appError.js";
 
 export const canDeleteTweet = (
   req: Request<{ id: string }>,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) => {
   try {

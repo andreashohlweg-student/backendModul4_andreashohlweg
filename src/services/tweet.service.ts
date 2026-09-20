@@ -16,7 +16,6 @@ const tweets: Tweet[] = [
 ];
 
 export const getAllTweets = (): Tweet[] => {
-  //throw new Error("Test error");
   return tweets;
 };
 
