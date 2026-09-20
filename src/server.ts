@@ -18,6 +18,10 @@ import {
 import { errorHandler } from "./middleware/errorHandler.js";
 import { InvalidCredentialsError } from "./errors/invalidCredentialsError.js";
 import { NotSignedInError } from "./errors/notSignedInError.js";
+import { TodoTitleMissingError } from "./errors/todoTitleMissingError.js";
+import { TodoTitleTypeError } from "./errors/todoTitleTypeError.js";
+import { TodoTitleEmptyError } from "./errors/todoTitleEmptyError.js";
+import { TodoTitleTooLongError } from "./errors/todoTitleTooLongError.js";
 
 import type {
   LoginRequestBody,
@@ -183,27 +187,19 @@ app.post(
       const { title } = req.body;
 
       if (title === undefined) {
-        return res.status(400).json({
-          error: "Das Feld 'title' fehlt.",
-        });
+        return next(new TodoTitleMissingError());
       }
 
       if (typeof title !== "string") {
-        return res.status(400).json({
-          error: "'title' muss ein String sein.",
-        });
+        return next(new TodoTitleTypeError());
       }
 
       if (title.trim().length === 0) {
-        return res.status(400).json({
-          error: "'title' darf nicht leer sein.",
-        });
+        return next(new TodoTitleEmptyError());
       }
 
       if (title.length > 100) {
-        return res.status(400).json({
-          error: "'title' darf maximal 100 Zeichen lang sein.",
-        });
+        return next(new TodoTitleTooLongError());
       }
 
       const newTodo: Todo = {
