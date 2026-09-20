@@ -16,7 +16,8 @@ import {
 } from "./services/session.service.js";
 
 import { errorHandler } from "./middleware/errorHandler.js";
-import { AppError } from "./errors/appError.js";
+import { InvalidCredentialsError } from "./errors/invalidCredentialsError.js";
+import { NotSignedInError } from "./errors/notSignedInError.js";
 
 import type {
   LoginRequestBody,
@@ -81,7 +82,7 @@ app.post(
       const storedPassword = registeredUsers.get(username);
 
       if (!storedPassword || storedPassword !== password) {
-        return next(new AppError(401, "Invalid credentials"));
+        return next(new InvalidCredentialsError());
       }
 
       const sessionId = createSession(username);
@@ -137,15 +138,15 @@ app.get(
       const sessionId = req.cookies.sessionId;
 
       if (typeof sessionId !== "string") {
-        return next(new AppError(401, "Not signed in"));
+        return next(new NotSignedInError());
       }
 
       const username = getUsernameBySession(sessionId);
 
       if (!username) {
-        return next(new AppError(401, "Not signed in"));
+        return next(new NotSignedInError());
       }
-      
+
       res.json({
         user: username,
       });
