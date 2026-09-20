@@ -1,3 +1,5 @@
+import { TweetTextRequiredError } from "../errors/tweetTextRequiredError.js";
+
 import type { Request, Response, NextFunction } from "express";
 import type { CreateTweetBody } from "../types/tweetRequest.js";
 
@@ -34,13 +36,8 @@ export const getTweet = (
 
     const tweet = getTweetById(id);
 
-    if (!tweet) {
-      return res.status(404).json({
-        error: "Tweet not found",
-      });
-    }
-
     res.status(200).json(tweet);
+
   } catch(error) {
     next(error);
   }
@@ -56,9 +53,7 @@ export const createTweetController = (
     const { text } = req.body;
 
     if (typeof text !== "string" || text.trim().length === 0) {
-      return res.status(400).json({
-        error: "Tweet text is required",
-      });
+      return next(new TweetTextRequiredError());
     }
 
     const newTweet = createTweet(
@@ -82,13 +77,8 @@ export const deleteTweetController = (
 
     const deletedTweet = deleteTweet(id);
 
-    if (!deletedTweet) {
-      return res.status(404).json({
-        error: "Tweet not found",
-      });
-    }
-
     return res.status(200).json(deletedTweet);
+
   } catch (error) {
     next(error);
   }

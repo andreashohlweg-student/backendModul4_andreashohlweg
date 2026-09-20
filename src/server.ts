@@ -9,6 +9,8 @@ import userRouter from "./routes/user.routes.js";
 
 import usersData from "../data/users.json" with { type: "json" };
 
+import { errorHandler } from "./middleware/errorHandler.js";
+
 import type { Request, Response } from "express";
 
 import type {
@@ -44,7 +46,6 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
-
 
 
 // --------------------------------------------------
@@ -285,7 +286,7 @@ app.get(
   },
 );
 
-
+app.use(errorHandler)
 // --------------------------------------------------
 // Server
 // --------------------------------------------------
