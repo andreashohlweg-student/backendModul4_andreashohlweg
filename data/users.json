@@ -1,32 +1,20 @@
 [
   {
-    "username": "anna",
-    "fullname": "Anna Müller",
+    "username": "alice",
+    "fullname": "Alice",
     "id": 0,
-    "profileDescription": "Frontend Developer"
+    "profileDescription": ""
   },
   {
-    "username": "max",
-    "fullname": "Max Berger",
+    "username": "bob",
+    "fullname": "Bob",
     "id": 1,
-    "profileDescription": "Backend Developer"
+    "profileDescription": ""
   },
   {
-    "username": "lisa",
-    "fullname": "Lisa Schmidt",
+    "username": "charlie",
+    "fullname": "Charlie",
     "id": 2,
-    "profileDescription": "UX Designer"
-  },
-  {
-    "username": "tom",
-    "fullname": "Tom Weber",
-    "id": 3,
-    "profileDescription": "Student"
-  },
-  {
-    "username": "sara",
-    "fullname": "Sara Klein",
-    "id": 4,
-    "profileDescription": "Photographer"
+    "profileDescription": ""
   }
 ]

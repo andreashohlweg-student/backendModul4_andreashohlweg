@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 import {
   getAllUsers,
@@ -8,25 +8,32 @@ import {
 export const getUsers = (
   _req: Request,
   res: Response,
+  next: NextFunction,
 ) => {
-  const users = getAllUsers();
+  try {
+    const users = getAllUsers();
 
-  return res.status(200).json(users);
+    return res.status(200).json(users);
+  } catch(error) {
+    next(error);
+  } 
+  
 };
 
 export const getUser = (
   req: Request<{ username: string }>,
   res: Response,
+  next: NextFunction
 ) => {
-  const { username } = req.params;
+    try {
+        const { username } = req.params;
 
-  const user = getUserByUsername(username);
+        const user = getUserByUsername(username);
 
-  if (!user) {
-    return res.status(404).json({
-      error: "User not found",
-    });
-  }
-
-  return res.status(200).json(user);
+        return res.status(200).json(user);
+        
+    } catch(error) {
+        next(error);
+    }
+  
 };

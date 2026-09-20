@@ -3,15 +3,19 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 
+import type { Request, Response } from "express";
 
 import tweetRouter from "./routes/tweet.routes.js";
 import userRouter from "./routes/user.routes.js";
 
-import usersData from "../data/users.json" with { type: "json" };
+import { getAllUsers } from "./services/user.service.js";
+import {
+  createSession,
+  getUsernameBySession,
+  deleteSession,
+} from "./services/session.service.js";
 
 import { errorHandler } from "./middleware/errorHandler.js";
-
-import type { Request, Response } from "express";
 
 import type {
   LoginRequestBody,
@@ -32,9 +36,6 @@ import type {
   CreateTodoBody,
 } from "./types/todo.js";
 
-import type { User } from "./types/user.js";
-
-import { createSession, getUsernameBySession, deleteSession } from "./services/session.service.js";
 
 // --------------------------------------------------
 // App Setup
@@ -52,15 +53,15 @@ app.use(cookieParser());
 // Daten
 // --------------------------------------------------
 
-const users: User[] = usersData;
-
-const registeredUsers = new Map<string, string>([
-  ["alice", process.env.ALICE_PASSWORD ?? ""],
-  ["bob", process.env.BOB_PASSWORD ?? ""],
-  ["charlie", process.env.CHARLIE_PASSWORD ?? ""],
-]);
+const registeredUsers = new Map<string, string>(
+  getAllUsers().map((user) => [
+    user.username,
+    process.env[`${user.username.toUpperCase()}_PASSWORD`] ?? "",
+  ]),
+);
 
 const todos: Todo[] = [];
+
 
 // --------------------------------------------------
 // Auth
@@ -97,7 +98,10 @@ app.post(
 
 app.post(
   "/auth/logout",
-  (req: Request, res: Response<LogoutResponse>) => {
+  (
+    req: Request,
+    res: Response<LogoutResponse>,
+  ) => {
     const sessionId = req.cookies.sessionId;
 
     if (typeof sessionId === "string") {
@@ -144,24 +148,15 @@ app.get(
 
 
 // --------------------------------------------------
-// Users
-// --------------------------------------------------
-
-app.get(
-  "/users",
-  (_req: Request, res: Response<User[]>) => {
-    res.status(200).json(users);
-  },
-);
-
-
-// --------------------------------------------------
 // Todos
 // --------------------------------------------------
 
 app.get(
   "/todos",
-  (_req: Request, res: Response<Todo[]>) => {
+  (
+    _req: Request,
+    res: Response<Todo[]>,
+  ) => {
     res.json(todos);
   },
 );
@@ -213,24 +208,31 @@ app.post(
 
 
 // --------------------------------------------------
-// Tweets
+// Resource Routes
 // --------------------------------------------------
 
 app.use("/tweets", tweetRouter);
 app.use("/users", userRouter);
 
+
 // --------------------------------------------------
 // Allgemeine Routes
 // --------------------------------------------------
 
-app.get("/echo", (_req, res) => {
-  res.send("Echo");
-});
+app.get(
+  "/echo",
+  (_req: Request, res: Response) => {
+    res.send("Echo");
+  },
+);
 
 
 app.get(
   "/hello",
-  (_req: Request, res: Response<HealthResponse>) => {
+  (
+    _req: Request,
+    res: Response<HealthResponse>,
+  ) => {
     res.status(200).json({
       success: true,
       message: "Syntax!",
@@ -242,7 +244,10 @@ app.get(
 
 app.get(
   "/health",
-  (_req: Request, res: Response<HealthResponse>) => {
+  (
+    _req: Request,
+    res: Response<HealthResponse>,
+  ) => {
     res.status(200).json({
       success: true,
       message: "Server is running",
@@ -273,7 +278,10 @@ app.get(
 
 app.get(
   "/greet",
-  (req: Request, res: Response<GreetResponse>) => {
+  (
+    req: Request,
+    res: Response<GreetResponse>,
+  ) => {
     const name = req.query.name;
     const lang = req.query.lang;
 
@@ -286,7 +294,14 @@ app.get(
   },
 );
 
-app.use(errorHandler)
+
+// --------------------------------------------------
+// Error Handling
+// --------------------------------------------------
+
+app.use(errorHandler);
+
+
 // --------------------------------------------------
 // Server
 // --------------------------------------------------
