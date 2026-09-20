@@ -3,29 +3,14 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 
 import tweetRouter from "./routes/tweet.routes.js";
 import userRouter from "./routes/user.routes.js";
 import todoRouter from "./routes/todo.routes.js";
-
-import { getAllUsers } from "./services/user.service.js";
-import {
-  createSession,
-  getUsernameBySession,
-  deleteSession,
-} from "./services/session.service.js";
+import authRouter from "./routes/auth.routes.js";
 
 import { errorHandler } from "./middleware/errorHandler.js";
-import { InvalidCredentialsError } from "./errors/invalidCredentialsError.js";
-import { NotSignedInError } from "./errors/notSignedInError.js";
-
-import type {
-  LoginRequestBody,
-  LoginResponse,
-  LogoutResponse,
-  MeResponse,
-} from "./types/auth.js";
 
 import type {
   HealthResponse,
@@ -45,115 +30,13 @@ app.use(cookieParser());
 
 
 // --------------------------------------------------
-// Daten
-// --------------------------------------------------
-
-const registeredUsers = new Map<string, string>(
-  getAllUsers().map((user) => [
-    user.username,
-    process.env[`${user.username.toUpperCase()}_PASSWORD`] ?? "",
-  ]),
-);
-
-// --------------------------------------------------
-// Auth
-// --------------------------------------------------
-
-app.post(
-  "/auth/login",
-  (
-    req: Request<{}, {}, LoginRequestBody>,
-    res: Response<LoginResponse>,
-    next: NextFunction,
-  ) => {
-    try {
-      const { username, password } = req.body;
-
-      const storedPassword = registeredUsers.get(username);
-
-      if (!storedPassword || storedPassword !== password) {
-        return next(new InvalidCredentialsError());
-      }
-
-      const sessionId = createSession(username);
-
-      res.cookie("sessionId", sessionId, {
-        httpOnly: true,
-      });
-
-      res.json({
-        message: "Login succeeded",
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-app.post(
-  "/auth/logout",
-  (
-    req: Request,
-    res: Response<LogoutResponse>,
-    next: NextFunction,
-  ) => {
-    try {
-      const sessionId = req.cookies.sessionId;
-
-      if (typeof sessionId === "string") {
-        deleteSession(sessionId);
-      }
-
-      res.clearCookie("sessionId");
-
-      res.json({
-        success: true,
-        message: "Logged out",
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-
-app.get(
-  "/me",
-  (
-    req: Request,
-    res: Response<MeResponse>,
-    next: NextFunction,
-  ) => {
-    try {
-      const sessionId = req.cookies.sessionId;
-
-      if (typeof sessionId !== "string") {
-        return next(new NotSignedInError());
-      }
-
-      const username = getUsernameBySession(sessionId);
-
-      if (!username) {
-        return next(new NotSignedInError());
-      }
-
-      res.json({
-        user: username,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-
-// --------------------------------------------------
 // Resource Routes
 // --------------------------------------------------
 
 app.use("/tweets", tweetRouter);
 app.use("/users", userRouter);
 app.use("/todos", todoRouter);
+app.use(authRouter);
 
 
 // --------------------------------------------------
