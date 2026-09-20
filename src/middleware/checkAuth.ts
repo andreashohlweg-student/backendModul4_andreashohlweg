@@ -1,9 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import { getUsernameBySession } from "../services/session.service.js";
+import { AppError } from "../errors/appError.js";
 
 export const checkAuth = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) => {
   const sessionId = req.cookies.sessionId;
@@ -11,11 +12,8 @@ export const checkAuth = (
   const username = getUsernameBySession(sessionId);
 
   if (!username) {
-    return res.status(401).json({
-      error: "Please sign in",
-    });
+    return next(new AppError(401, "Please sign in"));
   }
-
   req.user = username;
 
   next();

@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 import tweetRouter from "./routes/tweet.routes.js";
 import userRouter from "./routes/user.routes.js";
@@ -16,6 +16,7 @@ import {
 } from "./services/session.service.js";
 
 import { errorHandler } from "./middleware/errorHandler.js";
+import { AppError } from "./errors/appError.js";
 
 import type {
   LoginRequestBody,
@@ -72,48 +73,55 @@ app.post(
   (
     req: Request<{}, {}, LoginRequestBody>,
     res: Response<LoginResponse | AuthErrorResponse>,
+    next: NextFunction,
   ) => {
-    const { username, password } = req.body;
+    try {
+      const { username, password } = req.body;
 
-    const storedPassword = registeredUsers.get(username);
+      const storedPassword = registeredUsers.get(username);
 
-    if (!storedPassword || storedPassword !== password) {
-      return res.status(401).json({
-        error: "Invalid credentials",
+      if (!storedPassword || storedPassword !== password) {
+        return next(new AppError(401, "Invalid credentials"));
+      }
+
+      const sessionId = createSession(username);
+
+      res.cookie("sessionId", sessionId, {
+        httpOnly: true,
       });
+
+      res.json({
+        message: "Login succeeded",
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const sessionId = createSession(username);
-
-    res.cookie("sessionId", sessionId, {
-      httpOnly: true,
-    });
-
-    res.json({
-      message: "Login succeeded",
-    });
   },
 );
-
 
 app.post(
   "/auth/logout",
   (
     req: Request,
     res: Response<LogoutResponse>,
+    next: NextFunction,
   ) => {
-    const sessionId = req.cookies.sessionId;
+    try {
+      const sessionId = req.cookies.sessionId;
 
-    if (typeof sessionId === "string") {
-      deleteSession(sessionId);
+      if (typeof sessionId === "string") {
+        deleteSession(sessionId);
+      }
+
+      res.clearCookie("sessionId");
+
+      res.json({
+        success: true,
+        message: "Logged out",
+      });
+    } catch (error) {
+      next(error);
     }
-
-    res.clearCookie("sessionId");
-
-    res.json({
-      success: true,
-      message: "Logged out",
-    });
   },
 );
 
@@ -123,26 +131,27 @@ app.get(
   (
     req: Request,
     res: Response<MeResponse | AuthErrorResponse>,
+    next: NextFunction,
   ) => {
-    const sessionId = req.cookies.sessionId;
+    try {
+      const sessionId = req.cookies.sessionId;
 
-    if (typeof sessionId !== "string") {
-      return res.status(401).json({
-        error: "Not signed in",
+      if (typeof sessionId !== "string") {
+        return next(new AppError(401, "Not signed in"));
+      }
+
+      const username = getUsernameBySession(sessionId);
+
+      if (!username) {
+        return next(new AppError(401, "Not signed in"));
+      }
+      
+      res.json({
+        user: username,
       });
+    } catch (error) {
+      next(error);
     }
-
-    const username = getUsernameBySession(sessionId);
-
-    if (!username) {
-      return res.status(401).json({
-        error: "Not signed in",
-      });
-    }
-
-    res.json({
-      user: username,
-    });
   },
 );
 
