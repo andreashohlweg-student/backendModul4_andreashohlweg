@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import type { CreateTweetBody } from "../types/tweetRequest.js";
 
 import {
@@ -12,62 +12,84 @@ import {
 export const getTweets = (
   _req: Request,
   res: Response,
+  next: NextFunction
 ) => {
-  const tweets = getAllTweets();
+  try {
+    const tweets = getAllTweets();
 
-  res.status(200).json(tweets);
+    res.status(200).json(tweets);
+
+  } catch(error) {
+    next(error);
+  }
 };
 
 export const getTweet = (
   req: Request<{ id: string }>,
   res: Response,
+  next: NextFunction
 ) => {
-  const id = Number(req.params.id);
+  try {
+    const id = Number(req.params.id);
 
-  const tweet = getTweetById(id);
+    const tweet = getTweetById(id);
 
-  if (!tweet) {
-    return res.status(404).json({
-      error: "Tweet not found",
-    });
+    if (!tweet) {
+      return res.status(404).json({
+        error: "Tweet not found",
+      });
+    }
+
+    res.status(200).json(tweet);
+  } catch(error) {
+    next(error);
   }
-
-  res.status(200).json(tweet);
+  
 };
 
 export const createTweetController = (
-    req: Request<{},{}, CreateTweetBody>,
-    res: Response,
+  req: Request<{}, {}, CreateTweetBody>,
+  res: Response,
+  next: NextFunction,
 ) => {
-    const {text} = req.body;
-    
+  try {
+    const { text } = req.body;
+
     if (typeof text !== "string" || text.trim().length === 0) {
-        return res.status(400).json({
-            error: "Tweet text is required"
-        });
+      return res.status(400).json({
+        error: "Tweet text is required",
+      });
     }
 
     const newTweet = createTweet(
-        text.trim(),
-        req.user!,
+      text.trim(),
+      req.user!,
     );
 
     res.status(201).json(newTweet);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteTweetController = (
   req: Request<{ id: string }>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const id = Number(req.params.id);
+  try {
+    const id = Number(req.params.id);
 
-  const deletedTweet = deleteTweet(id);
+    const deletedTweet = deleteTweet(id);
 
-  if (!deletedTweet) {
-    return res.status(404).json({
-      error: "Tweet not found",
-    });
+    if (!deletedTweet) {
+      return res.status(404).json({
+        error: "Tweet not found",
+      });
+    }
+
+    return res.status(200).json(deletedTweet);
+  } catch (error) {
+    next(error);
   }
-
-  return res.status(200).json(deletedTweet);
 };
