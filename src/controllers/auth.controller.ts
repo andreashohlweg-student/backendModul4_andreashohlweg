@@ -1,10 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import type {
-  LoginRequestBody,
-  LoginResponse,
-  LogoutResponse,
-  MeResponse,
-} from "../types/auth.js";
+import type { LoginResponse, LogoutResponse, MeResponse } from "../types/auth.js";
 
 import { getAllUsers } from "../services/user.service.js";
 import {
@@ -13,7 +8,9 @@ import {
   getUsernameBySession,
 } from "../services/session.service.js";
 import { InvalidCredentialsError } from "../errors/invalidCredentialsError.js";
+import { LoginCredentialsRequiredError } from "../errors/loginCredentialsRequiredError.js";
 import { NotSignedInError } from "../errors/notSignedInError.js";
+import { isRecord } from "../utils/isRecord.js";
 
 const registeredUsers = new Map<string, string>(
   getAllUsers().map((user) => [
@@ -23,12 +20,26 @@ const registeredUsers = new Map<string, string>(
 );
 
 export const login = (
-  req: Request<{}, {}, LoginRequestBody>,
+  req: Request<{}, {}, unknown>,
   res: Response<LoginResponse>,
   next: NextFunction,
 ) => {
   try {
+    if (!isRecord(req.body)) {
+      return next(new LoginCredentialsRequiredError());
+    }
+
     const { username, password } = req.body;
+
+    if (
+      typeof username !== "string"
+      || username.trim().length === 0
+      || typeof password !== "string"
+      || password.length === 0
+    ) {
+      return next(new LoginCredentialsRequiredError());
+    }
+
     const storedPassword = registeredUsers.get(username);
 
     if (!storedPassword || storedPassword !== password) {

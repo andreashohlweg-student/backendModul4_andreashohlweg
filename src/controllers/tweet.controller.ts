@@ -1,7 +1,7 @@
 import { TweetTextRequiredError } from "../errors/tweetTextRequiredError.js";
+import { isRecord } from "../utils/isRecord.js";
 
 import type { Request, Response, NextFunction } from "express";
-import type { CreateTweetBody } from "../types/tweetRequest.js";
 
 import {
   getAllTweets,
@@ -45,11 +45,15 @@ export const getTweet = (
 };
 
 export const createTweetController = (
-  req: Request<{}, {}, CreateTweetBody>,
+  req: Request<{}, {}, unknown>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
+    if (!isRecord(req.body)) {
+      return next(new TweetTextRequiredError());
+    }
+
     const { text } = req.body;
 
     if (typeof text !== "string" || text.trim().length === 0) {

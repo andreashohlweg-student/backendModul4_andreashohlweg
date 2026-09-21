@@ -10,6 +10,10 @@ export const checkAuth = (
   try {
     const sessionId = req.cookies.sessionId;
 
+    if (typeof sessionId !== "string") {
+      return next(new PleaseSignInError());
+    }
+
     const username = getUsernameBySession(sessionId);
 
     if (!username) {
