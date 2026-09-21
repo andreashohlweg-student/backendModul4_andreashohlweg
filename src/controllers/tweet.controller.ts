@@ -1,5 +1,6 @@
 import { TweetTextRequiredError } from "../errors/tweetTextRequiredError.js";
 import { isRecord } from "../utils/isRecord.js";
+import { parseTweetId } from "../utils/parseTweetId.js";
 
 import type { Request, Response, NextFunction } from "express";
 
@@ -32,7 +33,7 @@ export const getTweet = (
   next: NextFunction
 ) => {
   try {
-    const id = Number(req.params.id);
+    const id = parseTweetId(req.params.id);
 
     const tweet = getTweetById(id);
 
@@ -77,7 +78,7 @@ export const deleteTweetController = (
   next: NextFunction,
 ) => {
   try {
-    const id = Number(req.params.id);
+    const id = parseTweetId(req.params.id);
 
     const deletedTweet = deleteTweet(id);
 

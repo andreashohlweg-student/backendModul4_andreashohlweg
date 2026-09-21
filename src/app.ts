@@ -9,6 +9,7 @@ import todoRouter from "./routes/todo.routes.js";
 import tweetRouter from "./routes/tweet.routes.js";
 import userRouter from "./routes/user.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { notFoundHandler } from "./middleware/notFoundHandler.js";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/todos", todoRouter);
 app.use(authRouter);
 app.use(generalRouter);
 
+app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;

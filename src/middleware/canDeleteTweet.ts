@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { getTweetById } from "../services/tweet.service.js";
 import { AppError } from "../errors/appError.js";
+import { parseTweetId } from "../utils/parseTweetId.js";
 
 export const canDeleteTweet = (
   req: Request<{ id: string }>,
@@ -9,7 +10,7 @@ export const canDeleteTweet = (
   next: NextFunction,
 ) => {
   try {
-    const id = Number(req.params.id);
+    const id = parseTweetId(req.params.id);
 
     const tweet = getTweetById(id);
 
