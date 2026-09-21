@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 import { getTweetById } from "../services/tweet.service.js";
-import { AppError } from "../errors/appError.js";
+import { TweetDeleteForbiddenError } from "../errors/tweetDeleteForbiddenError.js";
 import { parseTweetId } from "../utils/parseTweetId.js";
 
 export const canDeleteTweet = (
@@ -15,9 +15,7 @@ export const canDeleteTweet = (
     const tweet = getTweetById(id);
 
     if (tweet.author !== req.user) {
-      return next(
-        new AppError(403, "You can only delete your own tweets"),
-      );
+      return next(new TweetDeleteForbiddenError());
     }
 
     next();
