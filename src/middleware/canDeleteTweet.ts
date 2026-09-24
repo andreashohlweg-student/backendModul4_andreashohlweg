@@ -9,17 +9,13 @@ export const canDeleteTweet = async (
   _res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const id = parseTweetId(req.params.id);
+  const id = parseTweetId(req.params.id);
 
-    const tweet = await getTweetById(id);
+  const tweet = await getTweetById(id);
 
-    if (tweet.author !== req.user) {
-      return next(new TweetDeleteForbiddenError());
-    }
-
-    next();
-  } catch (error) {
-    next(error);
+  if (tweet.author !== req.user) {
+    throw new TweetDeleteForbiddenError();
   }
+
+  next();
 };

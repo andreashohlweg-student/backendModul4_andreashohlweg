@@ -7,22 +7,18 @@ export const checkAuth = (
   _res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const sessionId = req.cookies.sessionId;
+  const sessionId = req.cookies.sessionId;
 
-    if (typeof sessionId !== "string") {
-      return next(new PleaseSignInError());
-    }
-
-    const username = getUsernameBySession(sessionId);
-
-    if (!username) {
-      return next(new PleaseSignInError());
-    }
-    req.user = username;
-
-    next();
-  } catch (error) {
-    next(error);
+  if (typeof sessionId !== "string") {
+    throw new PleaseSignInError();
   }
+
+  const username = getUsernameBySession(sessionId);
+
+  if (!username) {
+    throw new PleaseSignInError();
+  }
+
+  req.user = username;
+  next();
 };

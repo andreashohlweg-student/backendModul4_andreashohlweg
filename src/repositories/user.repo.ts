@@ -1,8 +1,9 @@
-import { pool } from "../database.js";
+import { queryDatabase } from "../database.js";
+import { UnexpectedDatabaseResultError } from "../errors/unexpectedDatabaseResultError.js";
 import type { User } from "../types/user.js";
 
 export const findAllUsers = async (): Promise<User[]> => {
-  const result = await pool.query<User>(`
+  const result = await queryDatabase<User>(`
     SELECT
       id,
       username,
@@ -18,7 +19,7 @@ export const findAllUsers = async (): Promise<User[]> => {
 export const findUserByUsername = async (
   username: string,
 ): Promise<User | undefined> => {
-  const result = await pool.query<User>(
+  const result = await queryDatabase<User>(
     `
       SELECT
         id,
@@ -37,10 +38,16 @@ export const findUserByUsername = async (
 export const checkUserExists = async (
   username: string,
 ): Promise<boolean> => {
-  const result = await pool.query<{ exists: boolean }>(
+  const result = await queryDatabase<{ exists: boolean }>(
     "SELECT EXISTS (SELECT 1 FROM users WHERE username = $1) AS exists",
     [username],
   );
 
-  return result.rows[0]?.exists ?? false;
+  const row = result.rows[0];
+
+  if (!row) {
+    throw new UnexpectedDatabaseResultError();
+  }
+
+  return row.exists;
 };

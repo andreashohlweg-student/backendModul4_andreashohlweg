@@ -1,7 +1,15 @@
 import { TweetNotFoundError } from "../errors/tweetNotFoundError.js";
 import type { Tweet } from "../types/tweet.js";
-import { findAllTweets, insertTweet, findTweetById, deleteTweetById, findTweetsByCreatedAt, findTweetsByAuthor, findTweetsPaginated, findTweetsByAuthorPaginated } from "../repositories/tweet.repo.js";
-
+import {
+  deleteTweetById,
+  findAllTweets,
+  findTweetById,
+  findTweetsByAuthor,
+  findTweetsByAuthorPaginated,
+  findTweetsByCreatedAt,
+  findTweetsPaginated,
+  insertTweet,
+} from "../repositories/tweet.repo.js";
 
 export const getAllTweets = async (): Promise<Tweet[]> => {
   return findAllTweets();
@@ -16,7 +24,6 @@ export const getTweetById = async (id: number): Promise<Tweet> => {
 
   return tweet;
 };
-
 
 export const getTweetsByCreatedAt = async (): Promise<Tweet[]> => {
   return findTweetsByCreatedAt();

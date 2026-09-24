@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import type { LoginResponse, LogoutResponse, MeResponse } from "../types/auth.js";
 
 import { userExists } from "../services/user.service.js";
@@ -15,96 +15,81 @@ import { isRecord } from "../utils/isRecord.js";
 export const login = async (
   req: Request<{}, {}, unknown>,
   res: Response<LoginResponse>,
-  next: NextFunction,
 ) => {
-  try {
-    if (!isRecord(req.body)) {
-      return next(new LoginCredentialsRequiredError());
-    }
-
-    const { username, password } = req.body;
-
-    if (
-      typeof username !== "string"
-      || username.trim().length === 0
-      || typeof password !== "string"
-      || password.length === 0
-    ) {
-      return next(new LoginCredentialsRequiredError());
-    }
-
-    const normalizedUsername = username.trim().toLowerCase();
-    const storedPassword = process.env[
-      `${normalizedUsername.toUpperCase()}_PASSWORD`
-    ];
-
-    if (
-      !storedPassword
-      || storedPassword !== password
-      || !(await userExists(normalizedUsername))
-    ) {
-      return next(new InvalidCredentialsError());
-    }
-
-    const sessionId = createSession(normalizedUsername);
-
-    res.cookie("sessionId", sessionId, {
-      httpOnly: true,
-    });
-
-    res.json({
-      message: "Login succeeded",
-    });
-  } catch (error) {
-    next(error);
+  if (!isRecord(req.body)) {
+    throw new LoginCredentialsRequiredError();
   }
+
+  const { username, password } = req.body;
+
+  if (
+    typeof username !== "string"
+    || username.trim().length === 0
+    || typeof password !== "string"
+    || password.length === 0
+  ) {
+    throw new LoginCredentialsRequiredError();
+  }
+
+  const normalizedUsername = username.trim().toLowerCase();
+  const storedPassword = process.env[
+    `${normalizedUsername.toUpperCase()}_PASSWORD`
+  ];
+
+  if (
+    !storedPassword
+    || storedPassword !== password
+    || !(await userExists(normalizedUsername))
+  ) {
+    throw new InvalidCredentialsError();
+  }
+
+  const sessionId = createSession(normalizedUsername);
+
+  res.cookie("sessionId", sessionId, {
+    httpOnly: true,
+  });
+
+  res.json({
+    message: "Login succeeded",
+  });
 };
 
 export const logout = (
   req: Request,
   res: Response<LogoutResponse>,
-  next: NextFunction,
 ) => {
-  try {
-    const sessionId = req.cookies.sessionId;
+  const sessionId = req.cookies.sessionId;
 
-    if (typeof sessionId === "string") {
-      deleteSession(sessionId);
-    }
-
-    res.clearCookie("sessionId");
-
-    res.json({
-      success: true,
-      message: "Logged out",
-    });
-  } catch (error) {
-    next(error);
+  if (typeof sessionId === "string") {
+    deleteSession(sessionId);
   }
+
+  res.clearCookie("sessionId");
+
+  res.json({
+    success: true,
+    message: "Logged out",
+  });
 };
 
 export const getMe = (
   req: Request,
   res: Response<MeResponse>,
-  next: NextFunction,
 ) => {
-  try {
-    const sessionId = req.cookies.sessionId;
+  const sessionId = req.cookies.sessionId;
 
-    if (typeof sessionId !== "string") {
-      return next(new NotSignedInError());
-    }
-
-    const username = getUsernameBySession(sessionId);
-
-    if (!username) {
-      return next(new NotSignedInError());
-    }
-
-    res.json({
-      user: username,
-    });
-  } catch (error) {
-    next(error);
+  if (typeof sessionId !== "string") {
+    throw new NotSignedInError();
   }
+
+  const username = getUsernameBySession(sessionId);
+
+  if (!username) {
+    throw new NotSignedInError();
+  }
+
+  res.json({
+    user: username,
+  });
 };

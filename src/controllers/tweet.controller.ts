@@ -1,8 +1,12 @@
+import { InvalidPaginationError } from "../errors/invalidPaginationError.js";
+import { InvalidTweetAuthorError } from "../errors/invalidTweetAuthorError.js";
+import { PleaseSignInError } from "../errors/pleaseSignInError.js";
 import { TweetTextRequiredError } from "../errors/tweetTextRequiredError.js";
+import { TweetTextTooLongError } from "../errors/tweetTextTooLongError.js";
 import { isRecord } from "../utils/isRecord.js";
 import { parseTweetId } from "../utils/parseTweetId.js";
 
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 
 import {
   getAllTweets,
@@ -12,131 +16,141 @@ import {
   getTweetsByCreatedAt,
   getTweetsByAuthor,
   getTweetsPaginated,
-  getTweetsByAuthorPaginated
+  getTweetsByAuthorPaginated,
 } from "../services/tweet.service.js";
 
+const parseAuthor = (value: unknown): string | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (
+    typeof value !== "string"
+    || value.trim().length === 0
+    || value.trim().length > 50
+  ) {
+    throw new InvalidTweetAuthorError();
+  }
+
+  return value.trim();
+};
+
+const parsePagination = (
+  limitValue: unknown,
+  offsetValue: unknown,
+): { limit: number; offset: number } | undefined => {
+  if (limitValue === undefined && offsetValue === undefined) {
+    return undefined;
+  }
+
+  if (typeof limitValue !== "string" || typeof offsetValue !== "string") {
+    throw new InvalidPaginationError();
+  }
+
+  const limit = Number(limitValue);
+  const offset = Number(offsetValue);
+
+  if (
+    !Number.isInteger(limit)
+    || limit < 1
+    || limit > 100
+    || !Number.isInteger(offset)
+    || offset < 0
+  ) {
+    throw new InvalidPaginationError();
+  }
+
+  return { limit, offset };
+};
 
 export const getTweets = async (
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
-  try {
-    const author = req.query.author;
-    const limit = req.query.limit;
-    const offset = req.query.offset;
+  const author = parseAuthor(req.query.author);
+  const pagination = parsePagination(req.query.limit, req.query.offset);
 
-    const parsedLimit =
-      typeof limit === "string" ? Number(limit) : undefined;
-
-    const parsedOffset =
-      typeof offset === "string" ? Number(offset) : undefined;
-
-
-    if (parsedLimit !== undefined && parsedOffset !== undefined) {
-      const tweets =
-        typeof author === "string"
-          ? await getTweetsByAuthorPaginated(
-              author,
-              parsedLimit,
-              parsedOffset
-            )
-          : await getTweetsPaginated(
-              parsedLimit,
-              parsedOffset
-            );
-
-      res.status(200).json(tweets);
-      return;
-    }
-
-    if (typeof author === "string") {
-      const tweets = await getTweetsByAuthor(author);
-
-      res.status(200).json(tweets);
-      return;
-    }
-
-    const tweets = await getAllTweets();
+  if (pagination) {
+    const tweets = author
+      ? await getTweetsByAuthorPaginated(
+        author,
+        pagination.limit,
+        pagination.offset,
+      )
+      : await getTweetsPaginated(pagination.limit, pagination.offset);
 
     res.status(200).json(tweets);
-  } catch (error) {
-    next(error);
+    return;
   }
+
+  if (author) {
+    const tweets = await getTweetsByAuthor(author);
+
+    res.status(200).json(tweets);
+    return;
+  }
+
+  const tweets = await getAllTweets();
+
+  res.status(200).json(tweets);
 };
 
 export const getTweet = async (
   req: Request<{ id: string }>,
   res: Response,
-  next: NextFunction
 ) => {
-  try {
-    const id = parseTweetId(req.params.id);
+  const id = parseTweetId(req.params.id);
 
-    const tweet = await getTweetById(id);
+  const tweet = await getTweetById(id);
 
-    res.status(200).json(tweet);
-
-  } catch(error) {
-    next(error);
-  }
-  
+  res.status(200).json(tweet);
 };
 
 export const getTweetsByCreatedAtController = async (
   _req: Request,
   res: Response,
-  next: NextFunction,
 ) => {
-  try {
-    const tweets = await getTweetsByCreatedAt();
+  const tweets = await getTweetsByCreatedAt();
 
-    res.status(200).json(tweets);
-  } catch (error) {
-    next(error);
-  }
+  res.status(200).json(tweets);
 };
 
 export const createTweetController = async (
   req: Request<{}, {}, unknown>,
   res: Response,
-  next: NextFunction,
 ) => {
-  try {
-    if (!isRecord(req.body)) {
-      return next(new TweetTextRequiredError());
-    }
-
-    const { text } = req.body;
-
-    if (typeof text !== "string" || text.trim().length === 0) {
-      return next(new TweetTextRequiredError());
-    }
-
-    const newTweet = await createTweet(
-      text.trim(),
-      req.user!,
-    );
-
-    res.status(201).json(newTweet);
-  } catch (error) {
-    next(error);
+  if (!isRecord(req.body)) {
+    throw new TweetTextRequiredError();
   }
+
+  const { text } = req.body;
+
+  if (typeof text !== "string" || text.trim().length === 0) {
+    throw new TweetTextRequiredError();
+  }
+
+  const normalizedText = text.trim();
+
+  if (normalizedText.length > 280) {
+    throw new TweetTextTooLongError();
+  }
+
+  if (!req.user) {
+    throw new PleaseSignInError();
+  }
+
+  const newTweet = await createTweet(normalizedText, req.user);
+
+  res.status(201).json(newTweet);
 };
 
 export const deleteTweetController = async (
   req: Request<{ id: string }>,
   res: Response,
-  next: NextFunction,
 ) => {
-  try {
-    const id = parseTweetId(req.params.id);
+  const id = parseTweetId(req.params.id);
 
-    const deletedTweet = await deleteTweet(id);
+  const deletedTweet = await deleteTweet(id);
 
-    return res.status(200).json(deletedTweet);
-
-  } catch (error) {
-    next(error);
-  }
+  res.status(200).json(deletedTweet);
 };

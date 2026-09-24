@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import type {
   GreetResponse,
   HealthResponse,
@@ -37,45 +37,35 @@ export const health = (
 export const greetByName = (
   req: Request<{ name: string }>,
   res: Response<GreetResponse>,
-  next: NextFunction,
 ) => {
-  try {
-    const name = req.params.name.trim();
-    const lang = req.query.lang;
+  const name = req.params.name.trim();
+  const lang = req.query.lang;
 
-    if (name.length === 0) {
-      return next(new GreetNameRequiredError());
-    }
-
-    const message = lang === "en"
-      ? `Hello ${name}`
-      : `Hallo ${name}`;
-
-    res.json({ message });
-  } catch (error) {
-    next(error);
+  if (name.length === 0) {
+    throw new GreetNameRequiredError();
   }
+
+  const message = lang === "en"
+    ? `Hello ${name}`
+    : `Hallo ${name}`;
+
+  res.json({ message });
 };
 
 export const greetByQuery = (
   req: Request,
   res: Response<GreetResponse>,
-  next: NextFunction,
 ) => {
-  try {
-    const name = req.query.name;
-    const lang = req.query.lang;
+  const name = req.query.name;
+  const lang = req.query.lang;
 
-    if (typeof name !== "string" || name.trim().length === 0) {
-      return next(new GreetNameRequiredError());
-    }
-
-    const message = lang === "en"
-      ? `Hello ${name.trim()}`
-      : `Hallo ${name.trim()}`;
-
-    res.json({ message });
-  } catch (error) {
-    next(error);
+  if (typeof name !== "string" || name.trim().length === 0) {
+    throw new GreetNameRequiredError();
   }
+
+  const message = lang === "en"
+    ? `Hello ${name.trim()}`
+    : `Hallo ${name.trim()}`;
+
+  res.json({ message });
 };

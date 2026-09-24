@@ -1,8 +1,9 @@
-import { pool } from "../database.js";
+import { queryDatabase } from "../database.js";
+import { UnexpectedDatabaseResultError } from "../errors/unexpectedDatabaseResultError.js";
 import type { Tweet } from "../types/tweet.js";
 
 export const findAllTweets = async (): Promise<Tweet[]> => {
-  const result = await pool.query<Tweet>(`
+  const result = await queryDatabase<Tweet>(`
     SELECT id, text, author
     FROM tweets
     ORDER BY id
@@ -15,19 +16,25 @@ export const insertTweet = async (
   text: string,
   author: string,
 ): Promise<Tweet> => {
-  const result = await pool.query<Tweet>(`
+  const result = await queryDatabase<Tweet>(`
     INSERT INTO tweets (text, author)
     VALUES ($1, $2)
     RETURNING id, text, author
   `, [text, author]);
 
-  return result.rows[0]!;
+  const tweet = result.rows[0];
+
+  if (!tweet) {
+    throw new UnexpectedDatabaseResultError();
+  }
+
+  return tweet;
 };
 
 export const findTweetById = async (
   id: number,
 ): Promise<Tweet | undefined> => {
-  const result = await pool.query<Tweet>(
+  const result = await queryDatabase<Tweet>(
     `
       SELECT id, text, author
       FROM tweets
@@ -42,7 +49,7 @@ export const findTweetById = async (
 export const deleteTweetById = async (
   id: number,
 ): Promise<Tweet | undefined> => {
-  const result = await pool.query<Tweet>(
+  const result = await queryDatabase<Tweet>(
     `
       DELETE FROM tweets
       WHERE id = $1
@@ -55,7 +62,7 @@ export const deleteTweetById = async (
 };
 
 export const findTweetsByCreatedAt = async (): Promise<Tweet[]> => {
-  const result = await pool.query<Tweet>(`
+  const result = await queryDatabase<Tweet>(`
     SELECT id, text, author
     FROM tweets
     ORDER BY created_at DESC
@@ -67,7 +74,7 @@ export const findTweetsByCreatedAt = async (): Promise<Tweet[]> => {
 export const findTweetsByAuthor = async (
   author: string,
 ): Promise<Tweet[]> => {
-  const result = await pool.query<Tweet>(
+  const result = await queryDatabase<Tweet>(
     `
       SELECT id, text, author
       FROM tweets
@@ -84,7 +91,7 @@ export const findTweetsPaginated = async (
   limit: number,
   offset: number,
 ): Promise<Tweet[]> => {
-  const result = await pool.query<Tweet>(
+  const result = await queryDatabase<Tweet>(
     `
       SELECT id, text, author
       FROM tweets
@@ -103,7 +110,7 @@ export const findTweetsByAuthorPaginated = async (
   limit: number,
   offset: number,
 ): Promise<Tweet[]> => {
-  const result = await pool.query<Tweet>(
+  const result = await queryDatabase<Tweet>(
     `
       SELECT id, text, author
       FROM tweets
@@ -117,4 +124,3 @@ export const findTweetsByAuthorPaginated = async (
 
   return result.rows;
 };
-

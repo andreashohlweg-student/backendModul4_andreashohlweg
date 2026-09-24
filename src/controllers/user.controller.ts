@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 
 import {
   getAllUsers,
@@ -8,32 +8,19 @@ import {
 export const getUsers = async (
   _req: Request,
   res: Response,
-  next: NextFunction,
 ) => {
-  try {
-    const users = await getAllUsers();
+  const users = await getAllUsers();
 
-    return res.status(200).json(users);
-  } catch(error) {
-    next(error);
-  } 
-  
+  res.status(200).json(users);
 };
 
 export const getUser = async (
   req: Request<{ username: string }>,
   res: Response,
-  next: NextFunction
 ) => {
-    try {
-        const { username } = req.params;
+  const { username } = req.params;
 
-        const user = await getUserByUsername(username);
+  const user = await getUserByUsername(username);
 
-        return res.status(200).json(user);
-        
-    } catch(error) {
-        next(error);
-    }
-  
+  res.status(200).json(user);
 };

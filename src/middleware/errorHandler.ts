@@ -32,6 +32,10 @@ export const errorHandler = (
   }
 
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) {
+      console.error(error);
+    }
+
     return res.status(error.statusCode).json({
       error: error.message,
     });
