@@ -144,7 +144,7 @@ export const createTweetController = async (
 
   const normalizedText = text.trim();
 
-  if (normalizedText.length > 280) {
+  if (Array.from(normalizedText).length > 280) {
     throw new TweetTextTooLongError();
   }
 
