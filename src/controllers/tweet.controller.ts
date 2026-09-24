@@ -3,6 +3,7 @@ import { InvalidTweetAuthorError } from "../errors/invalidTweetAuthorError.js";
 import { PleaseSignInError } from "../errors/pleaseSignInError.js";
 import { TweetTextRequiredError } from "../errors/tweetTextRequiredError.js";
 import { TweetTextTooLongError } from "../errors/tweetTextTooLongError.js";
+import { TweetTextTypeError } from "../errors/tweetTextTypeError.js";
 import { isRecord } from "../utils/isRecord.js";
 import { parseTweetId } from "../utils/parseTweetId.js";
 
@@ -129,7 +130,15 @@ export const createTweetController = async (
 
   const { text } = req.body;
 
-  if (typeof text !== "string" || text.trim().length === 0) {
+  if (text === undefined) {
+    throw new TweetTextRequiredError();
+  }
+
+  if (typeof text !== "string") {
+    throw new TweetTextTypeError();
+  }
+
+  if (text.trim().length === 0) {
     throw new TweetTextRequiredError();
   }
 
