@@ -10,6 +10,7 @@ import {
 import { InvalidCredentialsError } from "../errors/invalidCredentialsError.js";
 import { LoginCredentialsRequiredError } from "../errors/loginCredentialsRequiredError.js";
 import { NotSignedInError } from "../errors/notSignedInError.js";
+import { PasswordTooLongError } from "../errors/passwordTooLongError.js";
 import { isRecord } from "../utils/isRecord.js";
 import { parseUsername } from "../utils/parseUsername.js";
 
@@ -30,6 +31,10 @@ export const login = async (
     || password.length === 0
   ) {
     throw new LoginCredentialsRequiredError();
+  }
+
+  if (password.length > 128) {
+    throw new PasswordTooLongError();
   }
 
   const normalizedUsername = parseUsername(username);
