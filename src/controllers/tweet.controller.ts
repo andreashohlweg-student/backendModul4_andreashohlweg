@@ -8,26 +8,64 @@ import {
   getAllTweets,
   getTweetById,
   createTweet,
-  deleteTweet
+  deleteTweet,
+  getTweetsByCreatedAt,
+  getTweetsByAuthor,
+  getTweetsPaginated,
+  getTweetsByAuthorPaginated
 } from "../services/tweet.service.js";
 
 
-export const getTweets = (
-  _req: Request,
+export const getTweets = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const tweets = getAllTweets();
+    const author = req.query.author;
+    const limit = req.query.limit;
+    const offset = req.query.offset;
+
+    const parsedLimit =
+      typeof limit === "string" ? Number(limit) : undefined;
+
+    const parsedOffset =
+      typeof offset === "string" ? Number(offset) : undefined;
+
+
+    if (parsedLimit !== undefined && parsedOffset !== undefined) {
+      const tweets =
+        typeof author === "string"
+          ? await getTweetsByAuthorPaginated(
+              author,
+              parsedLimit,
+              parsedOffset
+            )
+          : await getTweetsPaginated(
+              parsedLimit,
+              parsedOffset
+            );
+
+      res.status(200).json(tweets);
+      return;
+    }
+
+    if (typeof author === "string") {
+      const tweets = await getTweetsByAuthor(author);
+
+      res.status(200).json(tweets);
+      return;
+    }
+
+    const tweets = await getAllTweets();
 
     res.status(200).json(tweets);
-
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 };
 
-export const getTweet = (
+export const getTweet = async (
   req: Request<{ id: string }>,
   res: Response,
   next: NextFunction
@@ -35,7 +73,7 @@ export const getTweet = (
   try {
     const id = parseTweetId(req.params.id);
 
-    const tweet = getTweetById(id);
+    const tweet = await getTweetById(id);
 
     res.status(200).json(tweet);
 
@@ -45,7 +83,21 @@ export const getTweet = (
   
 };
 
-export const createTweetController = (
+export const getTweetsByCreatedAtController = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const tweets = await getTweetsByCreatedAt();
+
+    res.status(200).json(tweets);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createTweetController = async (
   req: Request<{}, {}, unknown>,
   res: Response,
   next: NextFunction,
@@ -61,7 +113,7 @@ export const createTweetController = (
       return next(new TweetTextRequiredError());
     }
 
-    const newTweet = createTweet(
+    const newTweet = await createTweet(
       text.trim(),
       req.user!,
     );
@@ -72,7 +124,7 @@ export const createTweetController = (
   }
 };
 
-export const deleteTweetController = (
+export const deleteTweetController = async (
   req: Request<{ id: string }>,
   res: Response,
   next: NextFunction,
@@ -80,7 +132,7 @@ export const deleteTweetController = (
   try {
     const id = parseTweetId(req.params.id);
 
-    const deletedTweet = deleteTweet(id);
+    const deletedTweet = await deleteTweet(id);
 
     return res.status(200).json(deletedTweet);
 

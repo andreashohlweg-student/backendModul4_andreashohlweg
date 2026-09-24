@@ -1,26 +1,14 @@
 import { TweetNotFoundError } from "../errors/tweetNotFoundError.js";
-
 import type { Tweet } from "../types/tweet.js";
+import { findAllTweets, insertTweet, findTweetById, deleteTweetById, findTweetsByCreatedAt, findTweetsByAuthor, findTweetsPaginated, findTweetsByAuthorPaginated } from "../repositories/tweet.repo.js";
 
-const tweets: Tweet[] = [
-  {
-    id: 1,
-    text: "Hello Twitter!",
-    author: "alice",
-  },
-  {
-    id: 2,
-    text: "Mein zweiter Tweet",
-    author: "bob",
-  },
-];
 
-export const getAllTweets = (): Tweet[] => {
-  return tweets;
+export const getAllTweets = async (): Promise<Tweet[]> => {
+  return findAllTweets();
 };
 
-export const getTweetById = (id: number): Tweet => {
-  const tweet = tweets.find((tweet) => tweet.id === id);
+export const getTweetById = async (id: number): Promise<Tweet> => {
+  const tweet = await findTweetById(id);
 
   if (!tweet) {
     throw new TweetNotFoundError();
@@ -29,29 +17,45 @@ export const getTweetById = (id: number): Tweet => {
   return tweet;
 };
 
-export const createTweet = (
-    text: string,
-    author: string,
-): Tweet => {
-    const newTweet: Tweet = {
-        id: Math.max(0, ...tweets.map((tweet) => tweet.id)) + 1,
-        text,
-        author,
-    };
 
-    tweets.push(newTweet);
-
-    return newTweet;
+export const getTweetsByCreatedAt = async (): Promise<Tweet[]> => {
+  return findTweetsByCreatedAt();
 };
 
-export const deleteTweet = (id: number): Tweet => {
-    const index = tweets.findIndex((tweet) => tweet.id === id);
+export const getTweetsByAuthor = async (
+  author: string,
+): Promise<Tweet[]> => {
+  return findTweetsByAuthor(author);
+};
 
-    if (index === -1) {
-        throw new TweetNotFoundError();
-    }
+export const getTweetsPaginated = async (
+  limit: number,
+  offset: number,
+): Promise<Tweet[]> => {
+  return findTweetsPaginated(limit, offset);
+};
 
-    const deletedTweet = tweets.splice(index, 1)[0]!;
+export const getTweetsByAuthorPaginated = async (
+  author: string,
+  limit: number,
+  offset: number,
+): Promise<Tweet[]> => {
+  return findTweetsByAuthorPaginated(author, limit, offset);
+};
 
-    return deletedTweet;
+export const createTweet = (
+  text: string,
+  author: string,
+): Promise<Tweet> => {
+  return insertTweet(text, author);
+};
+
+export const deleteTweet = async (id: number): Promise<Tweet> => {
+  const deletedTweet = await deleteTweetById(id);
+
+  if (!deletedTweet) {
+    throw new TweetNotFoundError();
+  }
+
+  return deletedTweet;
 };

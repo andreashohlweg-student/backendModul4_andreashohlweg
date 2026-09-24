@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { LoginResponse, LogoutResponse, MeResponse } from "../types/auth.js";
 
-import { getAllUsers } from "../services/user.service.js";
+import { userExists } from "../services/user.service.js";
 import {
   createSession,
   deleteSession,
@@ -12,14 +12,7 @@ import { LoginCredentialsRequiredError } from "../errors/loginCredentialsRequire
 import { NotSignedInError } from "../errors/notSignedInError.js";
 import { isRecord } from "../utils/isRecord.js";
 
-const registeredUsers = new Map<string, string>(
-  getAllUsers().map((user) => [
-    user.username,
-    process.env[`${user.username.toUpperCase()}_PASSWORD`] ?? "",
-  ]),
-);
-
-export const login = (
+export const login = async (
   req: Request<{}, {}, unknown>,
   res: Response<LoginResponse>,
   next: NextFunction,
@@ -40,13 +33,20 @@ export const login = (
       return next(new LoginCredentialsRequiredError());
     }
 
-    const storedPassword = registeredUsers.get(username);
+    const normalizedUsername = username.trim().toLowerCase();
+    const storedPassword = process.env[
+      `${normalizedUsername.toUpperCase()}_PASSWORD`
+    ];
 
-    if (!storedPassword || storedPassword !== password) {
+    if (
+      !storedPassword
+      || storedPassword !== password
+      || !(await userExists(normalizedUsername))
+    ) {
       return next(new InvalidCredentialsError());
     }
 
-    const sessionId = createSession(username);
+    const sessionId = createSession(normalizedUsername);
 
     res.cookie("sessionId", sessionId, {
       httpOnly: true,

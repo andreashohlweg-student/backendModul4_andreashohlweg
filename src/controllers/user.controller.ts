@@ -5,13 +5,13 @@ import {
   getUserByUsername,
 } from "../services/user.service.js";
 
-export const getUsers = (
+export const getUsers = async (
   _req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const users = getAllUsers();
+    const users = await getAllUsers();
 
     return res.status(200).json(users);
   } catch(error) {
@@ -20,7 +20,7 @@ export const getUsers = (
   
 };
 
-export const getUser = (
+export const getUser = async (
   req: Request<{ username: string }>,
   res: Response,
   next: NextFunction
@@ -28,7 +28,7 @@ export const getUser = (
     try {
         const { username } = req.params;
 
-        const user = getUserByUsername(username);
+        const user = await getUserByUsername(username);
 
         return res.status(200).json(user);
         
