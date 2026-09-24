@@ -4,6 +4,7 @@ import {
   getAllUsers,
   getUserByUsername,
 } from "../services/user.service.js";
+import { parseUsername } from "../utils/parseUsername.js";
 
 export const getUsers = async (
   _req: Request,
@@ -18,7 +19,7 @@ export const getUser = async (
   req: Request<{ username: string }>,
   res: Response,
 ) => {
-  const { username } = req.params;
+  const username = parseUsername(req.params.username);
 
   const user = await getUserByUsername(username);
 

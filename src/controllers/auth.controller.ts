@@ -11,6 +11,7 @@ import { InvalidCredentialsError } from "../errors/invalidCredentialsError.js";
 import { LoginCredentialsRequiredError } from "../errors/loginCredentialsRequiredError.js";
 import { NotSignedInError } from "../errors/notSignedInError.js";
 import { isRecord } from "../utils/isRecord.js";
+import { parseUsername } from "../utils/parseUsername.js";
 
 export const login = async (
   req: Request<{}, {}, unknown>,
@@ -31,7 +32,7 @@ export const login = async (
     throw new LoginCredentialsRequiredError();
   }
 
-  const normalizedUsername = username.trim().toLowerCase();
+  const normalizedUsername = parseUsername(username);
   const storedPassword = process.env[
     `${normalizedUsername.toUpperCase()}_PASSWORD`
   ];
