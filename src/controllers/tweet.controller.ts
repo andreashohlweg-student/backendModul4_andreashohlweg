@@ -154,7 +154,10 @@ export const createTweetController = async (
 
   const newTweet = await createTweet(normalizedText, req.user);
 
-  res.status(201).json(newTweet);
+  res
+    .location(`/tweets/${newTweet.id}`)
+    .status(201)
+    .json(newTweet);
 };
 
 export const deleteTweetController = async (
