@@ -4,10 +4,11 @@ import {
   createTodoController,
   getTodos,
 } from "../controllers/todo.controller.js";
+import { requireJsonContentType } from "../middleware/requireJsonContentType.js";
 
 const router = Router();
 
 router.get("/", getTodos);
-router.post("/", createTodoController);
+router.post("/", requireJsonContentType, createTodoController);
 
 export default router;
