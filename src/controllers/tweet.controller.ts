@@ -47,6 +47,10 @@ const parsePagination = (
     throw new InvalidPaginationError();
   }
 
+  if (!/^\d+$/.test(limitValue) || !/^\d+$/.test(offsetValue)) {
+    throw new InvalidPaginationError();
+  }
+
   const limit = Number(limitValue);
   const offset = Number(offsetValue);
 
