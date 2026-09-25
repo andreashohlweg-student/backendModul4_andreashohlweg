@@ -3,6 +3,9 @@ import type { QueryResult, QueryResultRow } from "pg";
 import { DatabaseConflictError } from "./errors/databaseConflictError.js";
 import { DatabaseUnavailableError } from "./errors/databaseUnavailableError.js";
 import { DatabaseValidationError } from "./errors/databaseValidationError.js";
+import { TweetAuthorNotFoundError } from "./errors/tweetAuthorNotFoundError.js";
+import { TweetTextRequiredError } from "./errors/tweetTextRequiredError.js";
+import { UsernameAlreadyExistsError } from "./errors/usernameAlreadyExistsError.js";
 
 const { Pool } = pg;
 
@@ -26,20 +29,37 @@ export const checkDatabaseConnection = async (): Promise<void> => {
 
 type ErrorWithCode = {
   code?: unknown;
+  constraint?: unknown;
 };
 
-const getErrorCode = (error: unknown): string | undefined => {
+const getErrorProperty = (
+  error: unknown,
+  property: keyof ErrorWithCode,
+): string | undefined => {
   if (typeof error !== "object" || error === null) {
     return undefined;
   }
 
-  const { code } = error as ErrorWithCode;
+  const value = (error as ErrorWithCode)[property];
 
-  return typeof code === "string" ? code : undefined;
+  return typeof value === "string" ? value : undefined;
 };
 
-const translateDatabaseError = (error: unknown): Error => {
-  const code = getErrorCode(error);
+export const translateDatabaseError = (error: unknown): Error => {
+  const code = getErrorProperty(error, "code");
+  const constraint = getErrorProperty(error, "constraint");
+
+  if (constraint === "users_username_key") {
+    return new UsernameAlreadyExistsError({ cause: error });
+  }
+
+  if (constraint === "tweets_author_fkey") {
+    return new TweetAuthorNotFoundError({ cause: error });
+  }
+
+  if (constraint === "tweets_text_check") {
+    return new TweetTextRequiredError({ cause: error });
+  }
 
   if (
     code?.startsWith("08")

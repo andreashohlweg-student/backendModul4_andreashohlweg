@@ -1,3 +1,5 @@
+BEGIN;
+
 INSERT INTO users (id, username, fullname, profile_description)
 VALUES
   (1, 'alice', 'Alice', ''),
@@ -16,3 +18,5 @@ ON CONFLICT (id) DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('tweets', 'id'), COALESCE(MAX(id), 1), true)
 FROM tweets;
+
+COMMIT;

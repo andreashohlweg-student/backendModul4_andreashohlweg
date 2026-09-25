@@ -86,9 +86,14 @@ docker compose up --build -d backend
 docker compose logs -f backend
 docker compose logs -f postgres
 docker compose exec backend npm run typecheck
+docker compose exec backend npm run test:db
 docker compose exec backend sh
 docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
+
+Die Datenbanktests erzeugen ihre Prüfdaten innerhalb von Transaktionen und
+rollen sie anschließend zurück. Die vorhandenen lokalen Daten bleiben dabei
+unverändert.
 
 ## Anwendung stoppen
 
